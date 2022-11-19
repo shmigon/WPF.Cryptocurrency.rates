@@ -1,4 +1,5 @@
-﻿using CryptocurrencyRates.Services.Cryptocurrencies;
+﻿using CryptocurrencyRates.Configuration;
+using CryptocurrencyRates.Services.Cryptocurrencies;
 using CryptocurrencyRates.Services.WinServices;
 using System;
 using System.Collections.Generic;
@@ -38,20 +39,23 @@ namespace CryptocurrencyRates
         private readonly string PROP_CURRENCY= "name";
         private readonly string PROP_PRICE = "priceUsd";
 
-        private readonly int SECONDS = 10;
         #endregion
 
         #region private fields
         private volatile bool _started = false;
         private System.Windows.Threading.DispatcherTimer timer = new System.Windows.Threading.DispatcherTimer();
 
+        private ISettings _settings;
         private ICryptoCurrencyService _cryptoCurrencyService;
         private IWinServicesService _winServicesService;
         #endregion
 
         #region Ctors
-        public MainWindow(ICryptoCurrencyService cryptoCurrencyService, IWinServicesService winServicesService)
+        public MainWindow(ISettings settings,
+            ICryptoCurrencyService cryptoCurrencyService, 
+            IWinServicesService winServicesService)
         {
+            this._settings = settings;
             this._cryptoCurrencyService = cryptoCurrencyService;
             this._winServicesService = winServicesService;
 
@@ -92,7 +96,7 @@ namespace CryptocurrencyRates
                 if (timer.Interval == TimeSpan.FromSeconds(0))
                 {
                     timer.Stop();
-                    timer.Interval = TimeSpan.FromSeconds(SECONDS);
+                    timer.Interval = TimeSpan.FromSeconds(_settings.TimerIntervalSec);
                     timer.Start();
                 }
             } catch (Exception ex)

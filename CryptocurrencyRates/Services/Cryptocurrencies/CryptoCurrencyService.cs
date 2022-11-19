@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CryptocurrencyRates.Configuration;
+using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -7,23 +8,24 @@ namespace CryptocurrencyRates.Services.Cryptocurrencies
     public class CryptoCurrencyService : ICryptoCurrencyService
     {
         private HttpClient _httpClient;
+        private ISettings _settings;
 
-        public CryptoCurrencyService()
+        public CryptoCurrencyService(ISettings settings)
         {
             _httpClient = new HttpClient();
+            _settings = settings;
         }
 
         public async Task<dynamic> GetRatesAsync()
         {
+            var apiUrl = string.IsNullOrWhiteSpace(_settings.CryptoAssetIds) ? _settings.CryptoApiUrl : 
+                $"{_settings.CryptoApiUrl}?ids={_settings.CryptoAssetIds}";
 
-            // Here we filter the cryptocurrency list directly through the API. 
-            // In a real app move the ids to the configuration (for instance to the config file App.config)
-            Task<string> getTask = _httpClient.GetStringAsync("https://api.coincap.io/v2/assets?ids=bitcoin,ethereum,dogecoin");
+            Task<string> getTask = _httpClient.GetStringAsync(apiUrl);
 
             string rates = await getTask;
 
             // Here we use "dynamic" for the sake of simplicity.
-            // Just not to have an entity class with INotifyPropertyChanged interface implementation.
             dynamic res = JsonConvert.DeserializeObject(rates);
             return res;
         }
