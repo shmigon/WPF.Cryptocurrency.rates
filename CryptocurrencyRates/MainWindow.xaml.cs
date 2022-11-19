@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CryptocurrencyRates.Services.Cryptocurrencies;
+using CryptocurrencyRates.Services.WinServices;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -40,14 +42,19 @@ namespace CryptocurrencyRates
         #endregion
 
         #region private fields
-        private volatile bool started = false;
+        private volatile bool _started = false;
         private System.Windows.Threading.DispatcherTimer timer = new System.Windows.Threading.DispatcherTimer();
-        private HttpClient httpClient = new HttpClient();
+
+        private ICryptoCurrencyService _cryptoCurrencyService;
+        private IWinServicesService _winServicesService;
         #endregion
 
         #region Ctors
-        public MainWindow()
+        public MainWindow(ICryptoCurrencyService cryptoCurrencyService, IWinServicesService winServicesService)
         {
+            this._cryptoCurrencyService = cryptoCurrencyService;
+            this._winServicesService = winServicesService;
+
             InitializeComponent();
             InitGrid();
             InitTimer();
@@ -71,11 +78,11 @@ namespace CryptocurrencyRates
         #region Timer task
         private async void Timer_Tick(object sender, EventArgs e)
         {
-            if (started) return;
+            if (_started) return;
 
             try
             {
-                started = true;
+                _started = true;
 
                 Task taskFillRates = FillRates();
                 Task taskFillServices = Task.Run(() => FillServices());
@@ -97,7 +104,7 @@ namespace CryptocurrencyRates
                 Toggle();
                 
             }
-            started = false;
+            _started = false;
         }
         #endregion
 
@@ -127,18 +134,9 @@ namespace CryptocurrencyRates
         #region Fill data methods
         private async Task FillRates()
         {
-            // Here we filter the cryptocurrency list directly through the API. 
-            // In a real app move the ids to the configuration (for instance to the config file App.config)
-            Task<string> getTask = httpClient.GetStringAsync("https://api.coincap.io/v2/assets?ids=bitcoin,ethereum,dogecoin");
-
-            string rates = await getTask;
-
-            // Here we use "dynamic" for the sake of simplicity.
-            // Just not to have an entity class with INotifyPropertyChanged interface implementation.
-            dynamic res = Newtonsoft.Json.JsonConvert.DeserializeObject(rates);
-            if (!string.IsNullOrWhiteSpace(rates) && res != null && res.data != null && started)
+            dynamic res = await _cryptoCurrencyService.GetRatesAsync();
+            if (res != null && res.data != null && _started)
             {
-                
                 await Dispatcher.BeginInvoke(new Action(() =>
                 {
                     gridRates.Items.Clear();
@@ -152,19 +150,10 @@ namespace CryptocurrencyRates
 
         private void FillServices()
         {
-            var services = ServiceController.GetServices()
-                .Where(s => s.Status == ServiceControllerStatus.Running);
-
-            if (!started) return;
-
+            string info = _winServicesService.GetServicesInfo(ServiceControllerStatus.Running);
             Dispatcher.Invoke(new Action(() =>
             {
-
-                txtMultiline.Text = String.Empty;
-                foreach (var service in services)
-                {
-                    txtMultiline.AppendText($"{service.ServiceName} - {service.DisplayName}\n");
-                }
+                txtMultiline.Text = info;
             }));
         }
         #endregion
