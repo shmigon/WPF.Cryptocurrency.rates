@@ -1,4 +1,6 @@
-﻿using CryptocurrencyRates.Configuration.IoC;
+﻿using CryptocurrencyRates.Commands;
+using CryptocurrencyRates.Configuration.IoC;
+using CryptocurrencyRates.VM;
 using Ninject;
 using System.Windows;
 
@@ -18,7 +20,14 @@ namespace CryptocurrencyRates
             _kernel = new StandardKernel();
             _kernel.Load(new CryptocurrencyRatesModule());
 
-            Current.MainWindow = _kernel.Get<MainWindow>();
+            var window = _kernel.Get<MainWindow>();
+            
+            var viewModel = new ViewModel();
+            viewModel.StartStopFlow = _kernel.Get<IStartStopFlow>();
+
+            window.DataContext = viewModel;
+
+            Current.MainWindow = window;
             Current.MainWindow.Show();
         }
     }

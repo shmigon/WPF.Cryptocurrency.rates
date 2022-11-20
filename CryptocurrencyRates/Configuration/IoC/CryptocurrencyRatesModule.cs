@@ -1,4 +1,5 @@
-﻿using CryptocurrencyRates.Services.Cryptocurrencies;
+﻿using CryptocurrencyRates.Commands;
+using CryptocurrencyRates.Services.Cryptocurrencies;
 using CryptocurrencyRates.Services.WinServices;
 using Ninject.Modules;
 
@@ -12,6 +13,7 @@ namespace CryptocurrencyRates.Configuration.IoC
 
             Bind<ICryptoCurrencyService>().To<CryptoCurrencyService>().InSingletonScope();
             Bind<IWinServicesService>().To<WinServicesService>().InSingletonScope();
+            Bind<IStartStopFlow>().To<StartStopFlow>().InSingletonScope();
         }
     }
 }

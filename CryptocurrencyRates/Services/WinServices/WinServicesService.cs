@@ -13,7 +13,6 @@ namespace CryptocurrencyRates.Services.WinServices
                 .Where(s => statuses.Contains(s.Status));
             return result;
         }
-
         public string GetServicesInfo(params ServiceControllerStatus[] statuses)
         {
             IEnumerable<ServiceController> services = GetServices(statuses);
