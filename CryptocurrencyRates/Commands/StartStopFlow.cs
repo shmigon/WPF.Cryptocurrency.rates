@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace CryptocurrencyRates.Commands
 {
@@ -14,7 +15,7 @@ namespace CryptocurrencyRates.Commands
     {
         #region Fields
         private volatile bool _started = false;
-        private System.Windows.Threading.DispatcherTimer timer = new System.Windows.Threading.DispatcherTimer();
+        private DispatcherTimer _timer = new DispatcherTimer();
 
         private ISettings _settings;
         private ICryptoCurrencyService _cryptoCurrencyService;
@@ -43,8 +44,8 @@ namespace CryptocurrencyRates.Commands
         #region Timer methods
         private void InitTimer()
         {
-            timer.Tick += Timer_Tick;
-            timer.Interval = TimeSpan.FromSeconds(0);
+            _timer.Tick += Timer_Tick;
+            _timer.Interval = TimeSpan.FromSeconds(0);
         }
 
         private async void Timer_Tick(object sender, EventArgs e)
@@ -59,11 +60,11 @@ namespace CryptocurrencyRates.Commands
 
                 await Task.WhenAll(taskFillRates, taskFillServices);
 
-                if (timer.Interval == TimeSpan.FromSeconds(0))
+                if (_timer.Interval == TimeSpan.FromSeconds(0))
                 {
-                    timer.Stop();
-                    timer.Interval = TimeSpan.FromSeconds(_settings.TimerIntervalSec);
-                    timer.Start();
+                    _timer.Stop();
+                    _timer.Interval = TimeSpan.FromSeconds(_settings.TimerIntervalSec);
+                    _timer.Start();
                 }
             }
             catch (Exception ex)
@@ -82,14 +83,14 @@ namespace CryptocurrencyRates.Commands
         #region IStartStopFlow.Toggle
         public void Toggle()
         {
-            if (timer.IsEnabled)
+            if (_timer.IsEnabled)
             {
-                timer.Stop();
+                _timer.Stop();
             }
             else
             {
-                timer.Interval = TimeSpan.FromSeconds(0);
-                timer.Start();
+                _timer.Interval = TimeSpan.FromSeconds(0);
+                _timer.Start();
             }
             ViewModel.ButtonStartText = (ViewModel.ButtonStartText == ViewModel.START) ? ViewModel.STOP : ViewModel.START;
         }

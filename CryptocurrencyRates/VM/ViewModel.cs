@@ -39,7 +39,6 @@ namespace CryptocurrencyRates.VM
             get => _currencyInfoCollection; 
             set
             {
-                _currencyInfoCollection = value;
                 SetProperty(ref _currencyInfoCollection, value);
             }
         }
