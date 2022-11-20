@@ -1,28 +1,15 @@
 ﻿using CryptocurrencyRates.Configuration;
 using CryptocurrencyRates.Services.Cryptocurrencies;
 using CryptocurrencyRates.Services.WinServices;
+using CryptocurrencyRates.VM;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+using System.Collections.ObjectModel;
 using System.ServiceProcess;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace CryptocurrencyRates
 {
-    /* For the simplicity all the logic is within this class.
-     * According to SOLID principles real app should be implemented respectivelly. :)
-     */ 
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -32,13 +19,6 @@ namespace CryptocurrencyRates
         #region readonly fields
         private readonly string START = "Start";
         private readonly string STOP = "Stop";
-
-        private readonly string HEADER_CURRENCY = "Currency name";
-        private readonly string HEADER_PRICE = "Price in USD";
-
-        private readonly string PROP_CURRENCY= "name";
-        private readonly string PROP_PRICE = "priceUsd";
-
         #endregion
 
         #region private fields
@@ -48,6 +28,7 @@ namespace CryptocurrencyRates
         private ISettings _settings;
         private ICryptoCurrencyService _cryptoCurrencyService;
         private IWinServicesService _winServicesService;
+        private ViewModel _viewModel;
         #endregion
 
         #region Ctors
@@ -59,8 +40,10 @@ namespace CryptocurrencyRates
             this._cryptoCurrencyService = cryptoCurrencyService;
             this._winServicesService = winServicesService;
 
+            _viewModel = new ViewModel() { ButtonStartText = START };
+            DataContext = _viewModel;
+
             InitializeComponent();
-            InitGrid();
             InitTimer();
         }
         #endregion
@@ -71,19 +54,12 @@ namespace CryptocurrencyRates
             timer.Tick += Timer_Tick;
             timer.Interval = TimeSpan.FromSeconds(0);
         }
-
-        private void InitGrid()
-        {
-            gridRates.Columns.Add(new DataGridTextColumn() { Header = HEADER_CURRENCY, Binding = new Binding(PROP_CURRENCY) });
-            gridRates.Columns.Add(new DataGridTextColumn() { Header = HEADER_PRICE, Binding = new Binding(PROP_PRICE) });
-        }
         #endregion
 
         #region Timer task
         private async void Timer_Tick(object sender, EventArgs e)
         {
             if (_started) return;
-
             try
             {
                 _started = true;
@@ -131,34 +107,21 @@ namespace CryptocurrencyRates
                 timer.Interval = TimeSpan.FromSeconds(0);
                 timer.Start();
             }
-            btnStart.Content = (btnStart.Content.ToString() == START) ? STOP : START;
+            _viewModel.ButtonStartText = (_viewModel.ButtonStartText == START) ? STOP : START;
         }
         #endregion
 
         #region Fill data methods
         private async Task FillRates()
         {
-            dynamic res = await _cryptoCurrencyService.GetRatesAsync();
-            if (res != null && res.data != null && _started)
-            {
-                await Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    gridRates.Items.Clear();
-                    foreach (var rateData in res.data)
-                    {
-                        gridRates.Items.Add(rateData);
-                    }
-                }));
-            }
+            _viewModel.CurrencyInfoCollection = new ObservableCollection<CurrencyInfo>(
+                await _cryptoCurrencyService.GetRateListAsync());
         }
 
         private void FillServices()
         {
             string info = _winServicesService.GetServicesInfo(ServiceControllerStatus.Running);
-            Dispatcher.Invoke(new Action(() =>
-            {
-                txtMultiline.Text = info;
-            }));
+            _viewModel.ServicesInfo = info;
         }
         #endregion
     }

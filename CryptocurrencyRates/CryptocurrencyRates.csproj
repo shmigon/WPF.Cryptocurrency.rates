@@ -70,6 +70,9 @@
     <Compile Include="Services\Cryptocurrencies\ICryptoCurrencyService.cs" />
     <Compile Include="Services\WinServices\IWinServicesService.cs" />
     <Compile Include="Services\WinServices\WinServicesService.cs" />
+    <Compile Include="VM\CurrencyInfo.cs" />
+    <Compile Include="VM\ViewModel.cs" />
+    <Compile Include="VM\ViewModelBase.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

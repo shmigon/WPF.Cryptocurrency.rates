@@ -1,5 +1,7 @@
 ﻿using CryptocurrencyRates.Configuration;
+using CryptocurrencyRates.VM;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -20,14 +22,24 @@ namespace CryptocurrencyRates.Services.Cryptocurrencies
         {
             var apiUrl = string.IsNullOrWhiteSpace(_settings.CryptoAssetIds) ? _settings.CryptoApiUrl : 
                 $"{_settings.CryptoApiUrl}?ids={_settings.CryptoAssetIds}";
-
             Task<string> getTask = _httpClient.GetStringAsync(apiUrl);
-
             string rates = await getTask;
-
-            // Here we use "dynamic" for the sake of simplicity.
             dynamic res = JsonConvert.DeserializeObject(rates);
             return res;
+        }
+
+        public async Task<List<CurrencyInfo>> GetRateListAsync()
+        {
+            dynamic res = await GetRatesAsync();
+            var result = new List<CurrencyInfo>();
+            if (res != null && res.data != null)
+            {
+                foreach (var rateData in res.data)
+                {
+                    result.Add(new CurrencyInfo() { CurrencyName = rateData.name, PriceUsd = rateData.priceUsd });
+                }
+            }
+            return result;
         }
     }
 }
